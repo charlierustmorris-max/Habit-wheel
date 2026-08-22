@@ -28,7 +28,11 @@ export function Insights({ state, onPickDay }: Props) {
       <div className="pad">
         <h1 className="screen-title">Insights</h1>
         <div className="screen-sub">
-          {logged} days logged · {perfect} perfect {perfect === 1 ? 'day' : 'days'} in the last {window}
+          {logged === 0
+            ? 'No history yet — this fills in as you log'
+            : `${logged} ${logged === 1 ? 'day' : 'days'} logged · ${perfect} perfect ${
+                perfect === 1 ? 'day' : 'days'
+              } in the last ${window}`}
         </div>
         <div>
           {WINDOWS.map((w) => (
@@ -50,8 +54,8 @@ export function Insights({ state, onPickDay }: Props) {
         </div>
         {top.length === 0 ? (
           <p className="empty-note">
-            Not enough history yet. Once a habit has been both hit and missed a few times, it shows up
-            here with what the rest of your day looked like either way.
+            Not enough history yet. Once a habit has been both hit and missed a few times, it shows
+            up here with what the rest of your day looked like either way.
           </p>
         ) : (
           top.map((m) => (

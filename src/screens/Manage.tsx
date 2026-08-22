@@ -3,8 +3,6 @@ import type { AppState, Habit, HabitKind } from '../types';
 import { ONE_OFF_CATEGORY } from '../data/defaults';
 import { newId } from '../lib/parse';
 import { exportJSON, importJSON } from '../lib/store';
-import { generateSample } from '../lib/sample';
-import { todayKey } from '../lib/date';
 import { Sheet } from '../components/Sheet';
 import { IconPlus } from '../components/Icons';
 
@@ -180,15 +178,6 @@ export function Manage({ state, setState }: Props) {
           <h2>Data</h2>
         </div>
         <div className="pad" style={{ paddingTop: 18, display: 'grid', gap: 10 }}>
-          <button
-            className="btn"
-            onClick={() => {
-              setState((s) => generateSample(s, todayKey()));
-              setNote('Filled the empty days of the last 10 weeks with sample history.');
-            }}
-          >
-            Fill 10 weeks of sample history
-          </button>
           <button
             className="btn"
             onClick={() => {

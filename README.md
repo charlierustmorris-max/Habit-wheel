@@ -32,6 +32,11 @@ per category.
 **Manage** — add, edit, reweight, reschedule, and archive habits and categories,
 change the scoring thresholds, and export/restore your data as JSON.
 
+Days before you start using it stay empty on purpose — nothing is backfilled or
+invented. The heatmap shows them as blank cells, the week average ignores them,
+and streaks simply start when you do. If you want to fill a past day in yourself,
+the arrows on Today walk back through the calendar.
+
 ## The middle button
 
 The mic button parses a sentence into a day's log. Say or type it however it
@@ -119,7 +124,6 @@ src/
     parse.ts            the natural-language logger
     insights.ts         movers, heatmap, category rates
     store.ts            localStorage + the app state hook
-    sample.ts           seeded sample history
     date.ts             local calendar-day helpers
   components/           ring, tab bar, rows, sheets
   screens/              Today, Week, Insights, Manage
