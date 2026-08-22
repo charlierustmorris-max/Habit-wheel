@@ -6,9 +6,7 @@ server, no login, no backend. All data lives in `localStorage` on the device.
 Rendered through the **Nothing** design system: monochrome canvas, Swiss
 typographic hierarchy, instrument-panel labels, colour reserved for meaning.
 
-## Deploy
-
-Drag this folder onto Netlify. There is no build step.
+## Files
 
 ```
 index.html               the whole app — markup, styles, logic
@@ -16,10 +14,49 @@ manifest.webmanifest     PWA install metadata
 sw.js                    offline shell (precaches everything, fonts included)
 icon.svg  icon-*.png     app icons (any + maskable)
 fonts/                   Doto, Space Grotesk, Space Mono — latin subset, 61KB
+Dockerfile  Caddyfile    static server for Railway / any container host
+railway.json             pins Railway to the Dockerfile builder
 ```
 
-Serve over HTTPS (Netlify does) so the service worker registers and the app
-becomes installable. For local work: `python3 -m http.server 8899`.
+There is no build step and no dependencies. The app is static files.
+
+## Deploy
+
+Any host must serve this over **HTTPS** — a service worker will not register
+otherwise, so without it the app neither installs nor works offline. Railway
+and Netlify both give you HTTPS automatically.
+
+### Railway
+
+Railway has no static-file default, so the `Dockerfile` here runs Caddy in
+front of the folder. New Project → Deploy from GitHub repo → pick this repo
+and branch. Railway reads `railway.json`, builds the Dockerfile, and binds
+Caddy to the `PORT` it injects. Nothing to configure; no environment
+variables needed.
+
+Then **Settings → Networking → Generate Domain** to get the HTTPS URL.
+
+The Caddy config also does two things that matter for a PWA:
+
+- `index.html`, `sw.js` and the manifest are sent `Cache-Control: no-cache`,
+  so a deploy actually reaches browsers. Cached without revalidation, a
+  service worker can pin someone to an old build indefinitely.
+- `.webmanifest` gets `application/manifest+json`, which Go's MIME table
+  does not know about and which some browsers require before installing.
+
+### Netlify
+
+Drag the folder onto Netlify, or connect the repo. The `Dockerfile` and
+`Caddyfile` are ignored — Netlify serves static files directly.
+
+### Locally
+
+```sh
+python3 -m http.server 8899        # then open http://localhost:8899
+```
+
+Service workers are permitted on `localhost` without HTTPS, so install and
+offline behaviour can be tested there.
 
 ## Screens
 

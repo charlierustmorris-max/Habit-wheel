@@ -1,0 +1,33 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+# Railway injects PORT. 8080 is the local fallback.
+:{$PORT:8080} {
+	root * /srv
+	encode zstd gzip
+	file_server
+
+	# Fingerprint-free filenames, so the shell and the worker must always be
+	# revalidated -- otherwise a deploy can leave a browser pinned to the old
+	# app forever, with no way to push it forward.
+	@volatile path / /index.html /sw.js /manifest.webmanifest
+	header @volatile Cache-Control "no-cache"
+
+	# Fonts and icons never change without a new name.
+	@static path /fonts/* /icon.svg /icon-192.png /icon-512.png /icon-maskable-512.png
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# Go's mime table has no entry for .webmanifest.
+	header /manifest.webmanifest Content-Type "application/manifest+json"
+	# Let the worker at the root scope even though it is served from /sw.js.
+	header /sw.js Service-Worker-Allowed "/"
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+}
