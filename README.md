@@ -61,8 +61,23 @@ offline behaviour can be tested there.
 ## Screens
 
 **Today** — the day's score in a gauge ring, a coaching line, four stats, then
-habits grouped by category. `‹ ›` steps back through past days to log
-retroactively. Tasks sit at the bottom, marked *no points*.
+habits grouped into sections. `‹ ›` steps back through past days to log
+retroactively. Notes sit at the bottom, marked *no points*.
+
+Sections, and what they hold:
+
+| Section | Habits | Points |
+|---|---|---|
+| Wellness | Tennis, Workout · Sleep *(metric)* | 18 |
+| Nutrition | Protein, Calories, Water, Clean eats | 23 |
+| Mind | Meditation, Journal | 10 |
+| Improvement | Stretching, Jaw exercises | 9 |
+| Learning | Schoolwork complete, SAT prep, Membean, Learned something new · Hours learning *(metric)* | 25 |
+| Uncomfortable | Went out of my way | 3 |
+| Extra | Gym bag, Charger | unscored |
+
+**88 points over fifteen scored habits.** A genuinely good day lands in the
+80s; an ordinary decent day lands in the 60s–70s.
 
 **Week** — seven bars against the qualifying threshold, the week average, and
 the previous four weeks.
@@ -73,8 +88,9 @@ are logged), a twelve-week dot heatmap, and a thirty-day category breakdown.
 **Manage** — every habit fully editable, plus threshold, theme, export/import.
 
 **Capture** (mic, centre of the tab bar) — talk or type a brain dump. It splits
-on "and then", strips filler, tags times and days, and drops the results into
-Tasks after a review step.
+on "and then" (and on a bare "and" where a second instruction follows), strips
+filler, tags times and days, and drops the results into Notes after a review
+step. Nothing captured ever touches the score.
 
 ## Scoring
 
@@ -86,28 +102,37 @@ Tasks after a review step.
 
 Day score is `banked / possible` normalised to 0–100. A qualifying day is 80+
 (configurable). **Streak** counts consecutive qualifying days; **Needle** counts
-consecutive days scored above the day before. **Ceiling** is the best score
-still reachable — it drops as habits pass their "locks at" hour.
+consecutive days scored above the day before.
 
-Locking affects the ceiling only. Input stays open on every date, so
-retroactive logging always works.
+The fourth stat adapts. **Ceiling** — the best score still reachable — only
+means something when habits have a "locks at" hour, and this seed sets none:
+there is no fixed timetable, so everything stays reachable until midnight. With
+no locks the stat shows **Open** instead: how many habits are still untouched.
+Give any habit a lock hour in Manage and Ceiling comes back on its own.
 
-A habit with **0 points** is a metric: tracked and available to the correlation
-engine, but outside the score. It renders in its own *Metrics* group.
+Locking, when used, affects the ceiling only. Input stays open on every date,
+so retroactive logging always works.
+
+A habit with **0 points** is unscored: tracked, logged, and available to the
+correlation engine, but outside the score. Sleep and Hours learning are
+measures; Gym bag and Charger are a daily checklist. Unscored habits sit in
+their own section like any other, and a section holding nothing but unscored
+habits is headed *no points* rather than a tally.
 
 ## Data model
 
 ```ts
 habits    { id, name, category, type, points, target, unit, locksAt, order, archived }
 entries   { id, habitId, date: 'YYYY-MM-DD', value }
-tasks     { id, text, done, due?, createdAt }   // unscored, never reset daily
+tasks     { id, text, done, due?, createdAt }   // the Notes list; unscored, never resets daily
 settings  { qualifyingThreshold, theme }
 ```
 
 Dates are **local** `YYYY-MM-DD` strings, never UTC timestamps — a habit checked
 at 11pm lands on that day. Entries are created lazily; no row means "not done".
-Tasks live in a separate array that the scoring path never reads, so they cannot
-touch the score by construction.
+Notes live in a separate array (`tasks` in storage, for export compatibility)
+that the scoring path never reads, so they cannot touch the score by
+construction.
 
 Export before clearing browser storage.
 
@@ -119,9 +144,10 @@ stays neutral — colour only ever encodes *direction of travel*, never judgment
 On Insights, positive effects are neutral too; red is reserved for habits
 actually costing points.
 
-**2. Too many points seeded.** Rebalanced from 146 points to **78** across
-twelve load-bearing habits. A genuinely good day now lands in the 80s; an
-ordinary decent day lands in the 70s.
+**2. Too many points seeded.** Rebalanced from 146 points to **88** across
+fifteen scored habits, weighted so a genuinely good day lands in the 80s and an
+ordinary decent day lands in the 60s–70s. Both are asserted in the test suite,
+so a future reseed cannot quietly regress it.
 
 **3. Sleep was dragging everything.** Reseeded as a **0-point metric**. It is
 still logged every day and still feeds the correlation engine — it just no

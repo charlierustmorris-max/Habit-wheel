@@ -417,7 +417,7 @@ svg{display:block}
 
   <div class="stats">
     <div class="stat"><span class="v" id="sBanked">—</span><span class="k">Banked</span></div>
-    <div class="stat"><span class="v" id="sCeil">—</span><span class="k">Ceiling</span></div>
+    <div class="stat"><span class="v" id="sCeil">—</span><span class="k" id="sCeilK">Ceiling</span></div>
     <div class="stat"><span class="v" id="sStreak">—</span><span class="k" id="sStreakK">Streak 80+</span></div>
     <div class="stat"><span class="v" id="sNeedle">—</span><span class="k">Needle</span></div>
   </div>
@@ -426,7 +426,7 @@ svg{display:block}
 
   <div class="section">
     <div class="ghead">
-      <span class="gname">Tasks <span style="color:var(--text-disabled)">· no points</span></span>
+      <span class="gname">Notes <span style="color:var(--text-disabled)">· no points</span></span>
       <button class="gval" id="tAddTask" style="color:var(--interactive)">+ ADD</button>
     </div>
     <div id="tTasks"></div>
@@ -543,7 +543,7 @@ svg{display:block}
       <input type="file" id="mFile" accept="application/json,.json" hidden>
     </div>
     <div class="btnrow">
-      <button class="btn ghost" id="mClearTasks">Clear finished tasks</button>
+      <button class="btn ghost" id="mClearTasks">Clear finished notes</button>
     </div>
     <div class="btnrow" style="padding-top:var(--space-xl)">
       <button class="btn danger" id="mReset">Reset to seed</button>
@@ -582,29 +582,44 @@ svg{display:block}
    ═══════════════════════════════════════════════════════════════ */
 
 const KEY = "habitwheel.v1";
-const CATEGORIES = ["Athletics","Nutrition","School","Clarity","One-off"];
+const CATEGORIES = ["Wellness","Nutrition","Mind","Improvement","Learning","Uncomfortable","Extra"];
 const TYPES = ["binary","graded","tally"];
 
 /* ── Seed ──────────────────────────────────────────────────────
-   Rebalanced from v1's 146 pts. Twelve load-bearing scored habits
-   totalling 78 pts, so a genuinely good day lands in the 80s.
-   Sleep is seeded at 0 pts — a metric, not a habit. It still logs,
-   so the correlation engine can use it as an input.
+   Sections mirror how the day is actually judged, not a timetable.
+   Nothing carries a lock hour: no fixed schedule, so every habit
+   stays reachable until the day ends.
+
+   88 scored points over sixteen habits, weighted so a genuinely
+   good day lands in the 80s. Points of 0 mean tracked but unscored:
+   Sleep and Learning hours are measures, and Extra is a checklist.
    ─────────────────────────────────────────────────────────────── */
 const SEED = [
-  {name:"Tennis block 1",  category:"Athletics", type:"binary", points:10, target:1,   unit:"",    locksAt:12},
-  {name:"Tennis block 2",  category:"Athletics", type:"binary", points:10, target:1,   unit:"",    locksAt:19},
-  {name:"Workout",         category:"Athletics", type:"binary", points:8,  target:1,   unit:"",    locksAt:14},
-  {name:"Mobility blocks", category:"Athletics", type:"tally",  points:4,  target:3,   unit:"",    locksAt:22},
-  {name:"Protein",         category:"Nutrition", type:"graded", points:8,  target:160, unit:"g",   locksAt:21},
-  {name:"Hydration",       category:"Nutrition", type:"graded", points:5,  target:3,   unit:"L",   locksAt:21},
-  {name:"Ate clean",       category:"Nutrition", type:"binary", points:5,  target:1,   unit:"",    locksAt:21},
-  {name:"Membean",         category:"School",    type:"binary", points:5,  target:1,   unit:"",    locksAt:10},
-  {name:"Coursework",      category:"School",    type:"graded", points:8,  target:2,   unit:"hrs", locksAt:21},
-  {name:"Journal",         category:"Clarity",   type:"binary", points:5,  target:1,   unit:"",    locksAt:10},
-  {name:"In bed by 21:30", category:"Clarity",   type:"binary", points:6,  target:1,   unit:"",    locksAt:23},
-  {name:"Screens off after dinner", category:"Clarity", type:"binary", points:4, target:1, unit:"", locksAt:23},
-  {name:"Sleep",           category:"Clarity",   type:"graded", points:0,  target:8,   unit:"hrs", locksAt:10}
+  {name:"Tennis",             category:"Wellness",      type:"binary", points:10, target:1,    unit:"",     locksAt:24},
+  {name:"Workout",            category:"Wellness",      type:"binary", points:8,  target:1,    unit:"",     locksAt:24},
+  {name:"Sleep",              category:"Wellness",      type:"graded", points:0,  target:8,    unit:"hrs",  locksAt:24},
+
+  {name:"Protein",            category:"Nutrition",     type:"graded", points:8,  target:160,  unit:"g",    locksAt:24},
+  {name:"Calories",           category:"Nutrition",     type:"graded", points:5,  target:2800, unit:"kcal", locksAt:24},
+  {name:"Water",              category:"Nutrition",     type:"graded", points:5,  target:3,    unit:"L",    locksAt:24},
+  {name:"Clean eats",         category:"Nutrition",     type:"binary", points:5,  target:1,    unit:"",     locksAt:24},
+
+  {name:"Meditation",         category:"Mind",          type:"binary", points:5,  target:1,    unit:"",     locksAt:24},
+  {name:"Journal",            category:"Mind",          type:"binary", points:5,  target:1,    unit:"",     locksAt:24},
+
+  {name:"Stretching",         category:"Improvement",   type:"binary", points:5,  target:1,    unit:"",     locksAt:24},
+  {name:"Jaw exercises",      category:"Improvement",   type:"binary", points:4,  target:1,    unit:"",     locksAt:24},
+
+  {name:"Schoolwork complete",category:"Learning",      type:"binary", points:8,  target:1,    unit:"",     locksAt:24},
+  {name:"SAT prep",           category:"Learning",      type:"binary", points:8,  target:1,    unit:"",     locksAt:24},
+  {name:"Membean",            category:"Learning",      type:"binary", points:5,  target:1,    unit:"",     locksAt:24},
+  {name:"Learned something new",category:"Learning",    type:"binary", points:4,  target:1,    unit:"",     locksAt:24},
+  {name:"Hours learning",     category:"Learning",      type:"graded", points:0,  target:3,    unit:"hrs",  locksAt:24},
+
+  {name:"Went out of my way", category:"Uncomfortable", type:"tally",  points:3,  target:2,    unit:"",     locksAt:24},
+
+  {name:"Gym bag",            category:"Extra",         type:"binary", points:0,  target:1,    unit:"",     locksAt:24},
+  {name:"Charger",            category:"Extra",         type:"binary", points:0,  target:1,    unit:"",     locksAt:24}
 ];
 
 /* ── ids / storage ─────────────────────────────────────────── */
@@ -615,7 +630,7 @@ function freshState(){
     habits: SEED.map((h,i) => Object.assign({id:uid(), order:i, archived:false}, h)),
     entries: [], tasks: [],
     settings: {qualifyingThreshold:80, theme:"auto"},
-    meta: {version:1, createdAt: new Date().toISOString()}
+    meta: {version:1, seedVersion:2, createdAt: new Date().toISOString()}
   };
 }
 
@@ -881,6 +896,7 @@ function renderToday(){
   /* Ring: the arc stays neutral white. Only the trend arrow carries colour. */
   $("#ringArc").setAttribute("stroke-dashoffset", C * (1 - Math.min(1, s.score/100)));
   setMarker("#ringThresh", state.settings.qualifyingThreshold);
+  $("#ringCeil").style.display = s.ceiling >= 99.5 ? "none" : "";
   setMarker("#ringCeil", Math.min(100, s.ceiling));
   countTo($("#tScore"), s.score);
   $("#tDelta").innerHTML = prev.logged || s.logged ? deltaHTML(s.score - prev.score) : "";
@@ -888,43 +904,41 @@ function renderToday(){
   $("#tCoach").textContent = coachLine(s);
 
   $("#sBanked").innerHTML = Math.round(s.banked) + '<small>/' + Math.round(s.possible) + '</small>';
-  $("#sCeil").textContent = Math.round(s.ceiling);
+  const locksInUse = scoredHabits().some(h => Number.isFinite(h.locksAt) && h.locksAt < 24);
+  $("#sCeil").textContent = locksInUse ? Math.round(s.ceiling) : s.open.length;
+  $("#sCeilK").textContent = locksInUse ? "Ceiling" : "Open";
   $("#sStreak").textContent = streak();
   $("#sStreakK").textContent = "Streak " + state.settings.qualifyingThreshold + "+";
   $("#sNeedle").textContent = needle();
 
-  renderHabitGroups(s);
+  renderHabitGroups();
   renderTasks();
 }
 
-function renderHabitGroups(s){
-  const host = $("#tHabits");
-  const metrics = metricHabits();
-  const scored  = scoredHabits();
-  let html = "";
-
-  if (metrics.length){
-    html += '<div class="section" style="padding-top:var(--space-2xl)">' +
-            '<div class="ghead"><span class="gname">Metrics <span style="color:var(--text-disabled)">· not scored</span></span>' +
-            '<span class="gval"><em>tracked</em></span></div>' +
-            metrics.map(h => habitRowHTML(h)).join("") + '</div>';
+function renderHabitGroups(){
+  const host = $("#tHabits"), all = liveHabits();
+  if (!all.length){
+    host.innerHTML = '<div class="empty"><div class="dots"></div><h3>No habits</h3>' +
+      '<p>Add the few things that actually move the day. Manage &rsaquo; New habit.</p></div>';
+    return;
   }
+  // Grouped by category in habit order, so reordering in Manage reorders the
+  // sections too. A category carrying no points at all says so, rather than
+  // showing an empty 0 / 0 tally.
   const byCat = new Map();
-  for (const h of scored){
+  for (const h of all){
     if (!byCat.has(h.category)) byCat.set(h.category, []);
     byCat.get(h.category).push(h);
   }
-  if (!scored.length && !metrics.length){
-    html += '<div class="empty"><div class="dots"></div><h3>No habits</h3>' +
-            '<p>Add the few things that actually move the day. Manage &rsaquo; New habit.</p></div>';
-  }
+  let html = "";
   for (const [cat, hs] of byCat){
-    let e = 0, p = 0;
-    for (const h of hs){ e += earned(h, getVal(h.id, cursor)); p += h.points; }
+    let e = 0, pts = 0;
+    for (const h of hs){ e += earned(h, getVal(h.id, cursor)); pts += h.points; }
+    const val = pts > 0 ? nPts(e) + ' <em>/ ' + nPts(pts) + ' PTS</em>' : '<em>no points</em>';
     html += '<div class="section" style="padding-top:var(--space-xl)">' +
-            '<div class="ghead"><span class="gname">' + esc(cat) + '</span>' +
-            '<span class="gval">' + nPts(e) + ' <em>/ ' + nPts(p) + ' PTS</em></span></div>' +
-            hs.map(h => habitRowHTML(h)).join("") + '</div>';
+      '<div class="ghead"><span class="gname">' + esc(cat) + '</span>' +
+      '<span class="gval">' + val + '</span></div>' +
+      hs.map(h => habitRowHTML(h)).join("") + '</div>';
   }
   host.innerHTML = html;
   wireHabitRows(host);
@@ -932,14 +946,17 @@ function renderHabitGroups(s){
 
 function habitRowHTML(h){
   const v = getVal(h.id, cursor);
-  const locked = h.points > 0 && isLocked(h, cursor);
+  const locked = h.points > 0 && isLocked(h, cursor) && (cursor < today() || h.locksAt < 24);
   const e = earned(h, v);
   const bar = h.type !== "binary";
   const meta = [];
   if (h.type === "graded") meta.push(nVal(v) + " / " + nVal(h.target) + (h.unit ? " " + h.unit.toUpperCase() : ""));
   if (h.type === "tally")  meta.push(v + " / " + h.target + (h.unit ? " " + h.unit.toUpperCase() : ""));
   if (h.points > 0) meta.push(nPts(e) + " / " + nPts(h.points) + " PTS");
-  const metaHTML = meta.join(" · ") + (h.points <= 0 ? "" :
+  // A lock hour is only worth naming when there is one. With no schedule set
+  // every row would otherwise repeat "LOCKS END OF DAY" down the whole screen.
+  const hasLock = h.points > 0 && Number.isFinite(h.locksAt) && h.locksAt < 24;
+  const metaHTML = meta.join(" · ") + (!hasLock ? "" :
     (locked ? ' <span class="lk">· ' + (cursor < today() ? "PAST" : "LOCKED " + fmtHour(h.locksAt)) + "</span>"
             : ' · <span class="dimmer">LOCKS ' + fmtHour(h.locksAt) + "</span>"));
 
@@ -986,7 +1003,7 @@ function wireHabitRows(host){
   });
 }
 
-/* ── Tasks. Unscored by construction: nothing here is ever read
+/* ── Notes. Unscored by construction: nothing here is ever read
       by dayStats. They do not reset daily. ─────────────────── */
 function renderTasks(){
   const host = $("#tTasks");
@@ -994,7 +1011,7 @@ function renderTasks(){
     (a.done - b.done) || ((a.due||"9999") < (b.due||"9999") ? -1 : 1) || (a.createdAt < b.createdAt ? -1 : 1));
   if (!ts.length){
     host.innerHTML = '<div class="empty" style="padding:var(--space-2xl) var(--space-md)">' +
-      '<h3>Nothing captured</h3><p>Tap the mic and talk. Tasks never touch the score.</p></div>';
+      '<h3>Nothing captured</h3><p>Tap the mic and talk. Notes never touch the score.</p></div>';
     return;
   }
   host.innerHTML = ts.map(t => {
@@ -1009,7 +1026,7 @@ function renderTasks(){
         '" aria-label="' + esc(t.text) + '"><span class="chk sm" aria-hidden="true" aria-checked="' + (t.done?"true":"false") + '">' + CHECK + '</span></button>' +
       '<span class="txt">' + esc(t.text) + '</span>' +
       (due ? '<span class="due">' + esc(due) + '</span>' : '<span></span>') +
-      '<button class="del" data-taskdel="' + t.id + '" aria-label="Delete task">' +
+      '<button class="del" data-taskdel="' + t.id + '" aria-label="Delete note">' +
         '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>' +
     '</div>';
   }).join("");
@@ -1345,7 +1362,7 @@ function importData(file){
 /* ═══════════════════════════════════════════════════════════════
    CAPTURE — talk or type a brain dump. Splits on "and then",
    strips filler, tags times and days, drops the results into
-   Tasks. Tasks never touch the score.
+   Notes. Notes never touch the score.
    ═══════════════════════════════════════════════════════════════ */
 const ACTIONS = "ask|book|bring|buy|call|cancel|charge|check|clean|collect|confirm|download|drop|email|" +
   "fill|find|finish|fix|get|grab|make|message|order|pack|pay|pick|post|print|put|read|remind|renew|" +
@@ -1449,7 +1466,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 function openCapture(){
   openSheet("Capture",
     '<div class="field"><label for="capText">Brain dump</label>' +
-      '<textarea id="capText" rows="5" placeholder="Restring my racquet and then email coach about Saturday at 5"' +
+      '<textarea id="capText" rows="5" placeholder="Pack my gym bag and then book physio tomorrow morning"' +
       ' style="resize:vertical;border-bottom:1px solid var(--border-visible);width:100%;padding:10px 0;font-size:16px"></textarea>' +
       '<div class="hint" id="capHint">' + (SR ? "Tap record, or just type." : "Voice input is not available in this browser — type it.") + '</div>' +
     '</div>' +
@@ -1457,7 +1474,7 @@ function openCapture(){
       (SR ? '<button class="btn secondary" id="capRec">Record</button>' : "") +
       '<button class="btn primary" id="capNext" style="flex:1">Review</button>' +
     '</div>' +
-    '<p class="t-cap dimmer" style="padding-top:var(--space-xl)">Captured items become Tasks. Tasks carry no points and never touch the score.</p>',
+    '<p class="t-cap dimmer" style="padding-top:var(--space-xl)">Captured items become Notes. Notes carry no points and never touch the score.</p>',
     host => {
       const ta = $("#capText", host);
       $("#capNext", host).addEventListener("click", () => {
@@ -1499,12 +1516,12 @@ function reviewCapture(items){
   openSheet("Review · " + items.length + (items.length === 1 ? " item" : " items"),
     '<div id="capList">' + items.map((it,i) =>
       '<div class="pcap" data-i="' + i + '">' +
-        '<input type="text" value="' + esc(it.text) + '" aria-label="Task ' + (i+1) + '">' +
+        '<input type="text" value="' + esc(it.text) + '" aria-label="Note ' + (i+1) + '">' +
         (it.due ? '<span class="chip">' + esc(dueLabel(it.due)) + '</span>' : '<span class="chip dimmer" style="border-style:dashed">no date</span>') +
       '</div>').join("") + '</div>' +
     '<div class="btnrow" style="padding-top:var(--space-xl)">' +
       '<button class="btn ghost" id="capBack">Back</button>' +
-      '<button class="btn primary" id="capAdd" style="flex:1">Add ' + items.length + ' to tasks</button>' +
+      '<button class="btn primary" id="capAdd" style="flex:1">Add ' + items.length + ' to notes</button>' +
     '</div>',
     host => {
       $("#capBack", host).addEventListener("click", openCapture);
@@ -1525,10 +1542,10 @@ function dueLabel(due){
   return fmtShort(d).toLowerCase() + t;
 }
 function addTaskManually(){
-  openSheet("New task",
-    '<div class="field"><label for="ntText">Task</label><input id="ntText" type="text" maxlength="140" placeholder="What needs doing"></div>' +
+  openSheet("New note",
+    '<div class="field"><label for="ntText">Note</label><input id="ntText" type="text" maxlength="140" placeholder="What needs doing"></div>' +
     '<div class="field"><label for="ntDue">Due (optional)</label><input id="ntDue" type="date"></div>' +
-    '<div class="btnrow"><button class="btn primary full" id="ntAdd">Add task</button></div>',
+    '<div class="btnrow"><button class="btn primary full" id="ntAdd">Add note</button></div>',
     host => $("#ntAdd", host).addEventListener("click", () => {
       const text = $("#ntText", host).value.trim();
       if (!text) return;
@@ -1576,7 +1593,7 @@ $("#mImport").addEventListener("click", () => $("#mFile").click());
 $("#mFile").addEventListener("change", e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ""; });
 $("#mClearTasks").addEventListener("click", () => {
   const n = state.tasks.filter(t => t.done).length;
-  if (!n){ setStatus("[NO FINISHED TASKS]"); return; }
+  if (!n){ setStatus("[NO FINISHED NOTES]"); return; }
   state.tasks = state.tasks.filter(t => !t.done);
   save(); renderTasks(); setStatus("[CLEARED " + n + "]");
 });
