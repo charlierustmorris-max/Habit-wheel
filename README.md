@@ -11,10 +11,16 @@ full-screen like a native app.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm test         # scoring + parser tests
-npm run build
+npm run dev            # http://localhost:5173
+npm test               # scoring + parser tests
+npm run build          # production build into dist/
+npm start              # serve dist/ (what Railway runs)
+npm run build:single   # habit-wheel.html — one self-contained file
 ```
+
+`npm run build:single` produces `habit-wheel.html`: the whole app inlined into a
+single file with no external requests. Double-click it to try the app with no
+server and no install. Deploying is in [DEPLOY.md](DEPLOY.md).
 
 ## The four tabs
 
