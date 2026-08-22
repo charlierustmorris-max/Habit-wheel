@@ -1,0 +1,28 @@
+# Habit Wheel is a static single-page app — Netlify only needs to build it and
+# serve dist/. server.mjs is for hosts that run a Node process (Railway); Netlify
+# does not use it.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Build tooling lives in devDependencies, so the install must include them.
+  NPM_FLAGS = "--include=dev"
+
+# Unknown paths fall back to the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
